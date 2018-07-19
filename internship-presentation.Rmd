@@ -92,14 +92,15 @@ head(class.buff.clean.df)
 * Données très volumineuses = Temps de calcul important
 
 # 3. Organisation des données
+## 
 
-* Données statiques : CLC et MNT
+Données statiques : CLC et MNT
 
 ```{r echo=FALSE}
 head(expl.static.stations.df)
 ```
 
-* Données dynamiques : récupération sur les API des données (température et ensoleillement)
+Données dynamiques : récupération sur les API des données (température et ensoleillement)
 
 ----
 
@@ -133,21 +134,13 @@ Paramètres à définir pour la modélisation :
 * La méthode de rééchantillonage : validation croisée
 
 # 5. Visualisation du modèle 
-##
+## 
 
-A travers le benchmark :
+* A travers le benchmark : Performances du modèles (erreur moyenne)
 
-* Performances du modèles : erreur moyenne
+* A travers `mlr` : Accès aux paramètres du modèle (coefficients de l'équation de régression)
 
-A travers `mlr` :
-
-* Accès aux paramètres du modèle : coefficients de l'équation de régression
-
-A travers des cartes :
-
-* Statiques ou interactives (leaflet)
-
-* Visualisation des prédictions pour une heure donnée mais aussi de l'erreur relative
+* A travers des cartes : Statiques ou interactives (leaflet) & Visualisation des prédictions pour une heure donnée mais aussi de l'erreur relative
 
 ----
 
