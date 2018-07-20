@@ -41,25 +41,43 @@ output:
 load("~/Documents/code/internship-presentation/data/env_data_presentation.RData")
 ```
 
-# 1. Préparation de l'environnement de travail
-## 
-* Installation de Linux
+# 1. Objectifs
+##
+* Spatialiser des données de températures prédites à l'aide de la Régression Linéaire Multiple en vue d'une comparaison avec d'autres méthodes statistiques (krigeage, réseaux neuronaux...) pour évaluer la meilleure méthode.
 
-* Utilisation de Docker : Permet de créer un environnement de travail isolé où la configuration y est différente de l'ordinateur et où la configuration du Docker est la même pour tous ses utilisateurs
+* Intégrer des variables explicatives et trouver la meilleure combinaison de ces variables fournissant des prédictions avec une RMSE faible.
 
-* Utilisation de GitHub : service d'hébergement de gestion des versions des fichiers -> permet de travailler collaborativement sur un même code
+# 2. Travaux réalisés
+##
+Préparation de l'environnement de travail
 
-# 2. Récolte des données   
+* Installation de Linux : Open-source, science reproductible
 
-## 2.1. Données d'occupation du sol
+* Utilisation de Docker : Environnement de travail isolé avec configuration différente de l'ordinateur hôte. Assure la reproductibilité du code
+
+* Utilisation de GitHub : Service de gestion de versions -> Travail collaboratif
+
+## 2.1 Récolte des données   
+
+_Objectif_ : intégrer des variables explicatives pouvant influencer des paramètres du milieu
+
+Nécessité d'avoir des données sur les variables d'intérêt pour pouvoir les prédire
+
+### 2.1.1. Variables explicatives
+
+#### 2.1.1.1 Variables statiques
+
+Données d'occupation du sol : 
+
+* Stations en zones agricoles mais environnement à caractériser (route en asphalte à proximité ? forêt faisant de l'ombre ?)
 
 * CORINE Land Cover : données de [Copernicus](https://land.copernicus.eu/pan-european/corine-land-cover/view) accessibles sur le [géoportail belge](https://www.geo.be/#!/catalog/details/bcd19aa9-c320-4116-971b-6e4376137f13?l=en)
 
+----
+
 * 47 classes dont 26 présentes en Wallonie -> regroupement en 5 classes : Zones artificielles, Zones de cultures, Zones herbacées, Forêt et Plans d'eau
 
-* Récupération des données CLC aux stations (physiques et virtuelles) : réalisation de zones tampons autour des stations et calcul de la part de présence de chaque classe dans la zone
-
-----
+* Récupération des données aux stations : zones tampons (100m autour des stations physiques et 500m pour les stations virtuelles) et calcul de la part de chaque classe dans l'environnement de la station
 
 ```{r echo=FALSE}
 head(class.buff.clean.df)
@@ -67,59 +85,67 @@ head(class.buff.clean.df)
 
 ----
 
-![](./data/CLC_buffer.png){width=60%}
+![](./data/CLC_buffer.png){width=100%}
 
-## 2.2. API AGROMET
+----
 
-* 29 stations du réseau PAMESEB
+Modèle Numérique de Terrain
 
-* Accès à des données dynamiques horaires : __température__, humidité relative, humectation du feuillage, __ensoleillement__
+* Caractériser l'effet de la topographie du milieu sur la température
 
-* 27 stations utilisables si on prend l'ensoleillement
+* Données [SRTM](https://lta.cr.usgs.gov/SRTM) pour récupérer l'altitude (résolution 90m) puis calcul de la pente, l'orientation et la rugosité du terrain avec R
 
-## 2.3. API ensoleillement
+* Données très volumineuses = Temps de calcul important
+
+### 2.1.1.2. Variables dynamiques
+
+API ensoleillement
+
+* Caractériser l'impact du rayonnement solaire (W/m²) sur la température
 
 * Rayonnement solaire : données [EUMETSAT](https://landsaf.ipma.pt/en/products/longwave-shortwave-radiation/dssf/) récupérées sur une API
+
+----
 
 * Données horaires, 875 points répartis sur la Wallonie -> insuffisant pour la précision souhaitée d'1 km² (~ 17000 points)
 
 * Spatialisation des données solaires à l'aide d'une méthode de krigeage
 
-## 2.4. Modèle Numérique de Terrain
+* Récupération des données d'ensoleillement des stations PAMESEB en parallèle
 
-* Données SRTM pour récupérer l'altitude avec une résolution de 90m puis calcul de la pente, l'orientation et la rugosité du terrain avec R
+## 2.1.2. Variables d'intérêt
 
-* Données très volumineuses = Temps de calcul important
+API AGROMET
 
-# 3. Organisation des données
-## 
+* Besoin de données pour construire les modèles et les comparer à la réalité
 
-Données statiques : CLC et MNT
+* 29 stations du réseau PAMESEB
 
-```{r echo=FALSE}
-head(expl.static.stations.df)
-```
+* Accès à des données dynamiques horaires : __température__, humidité relative, humectation du feuillage
 
-Données dynamiques : récupération sur les API des données (température et ensoleillement)
+* 27 stations utilisables si on prend l'ensoleillement
 
-----
+## 2.2. Organisation des données
 
-Puis fusion de ces données en un seul tableau de données. Mais peu lisible car beaucoup de lignes (nb stations X nb heures récupérées) et non intégrable dans `mlr`.
+_Objectif_ : construire des modèles pour chaque heure
 
--> Création de "nested data frames"
+Regroupement des données statiques et dynamiques de chaque station.
 
-![](./data/purrr_nest.png){width=40%}
+Pour optimiser le temps de calcul et l'intégration dans `mlr`, création d'un "nested data frame" : chaque heure contient un ou plusieurs tableaux de données
 
+![](./data/purrr_nest.png){width=30%}
 
-# 4. Modélisation
+## 2.3. Modélisation
 
-## 4.1. Machine learning
+### 2.3.1. Machine learning
 
 _Définition_ : Le Machine Learning est un concept stipulant qu’il existe des algorithmes génériques pouvant nous révéler des informations intéressantes sur des données, sans avoir besoin de construire ou de développer un code spécifique. Au lieu d’écrire du code, vous nourrissez donc ces algorithmes avec des données qui leur permettront de construire leurs propres logiques.
 
-_Objectif_ : Réaliser un benchmark où différents algorithmes de régression sont appliqués à différentes tâches (ensemble de données avec différentes combinaisons de variables explicatives et le paramètre ciblé) dans le but de les comparer et de les classer et utiliser une stratégie de rééchantillonage par validation croisée (LOOCV) qui permet d'obtenir les performances souhaitées.
+_Objectif_ : Réaliser un benchmark appliquant la Régression Linéaire Multiple à différentes combinaisons de variables explicatives et au paramètre ciblé en utilisant une stratégie de rééchantillonage par validation croisée (LOOCV).
 
-## 4.2. Machine Learning in R
+----
+
+### 2.3.2. Machine Learning in R
 
 `mlr` : package R proposant une interface simplifiée et commune pour toutes les méthodes statistiques à intégrer dans le machine learning.
 
@@ -129,31 +155,47 @@ Paramètres à définir pour la modélisation :
 
 * Les méthodes statistiques d'apprentissage : Régression linéaire multiple
 
-* Les variables explicatives à comparer
+* Les variables explicatives à comparer : MNT, occupation du sol, ensoleillement
 
-* La méthode de rééchantillonage : validation croisée
+* La méthode de rééchantillonage : validation croisée par Leave-One-Out
 
-# 5. Visualisation du modèle 
-## 
 
-* A travers le benchmark : Performances du modèles (erreur moyenne)
+# 3. Résultats
 
-* A travers `mlr` : Accès aux paramètres du modèle (coefficients de l'équation de régression)
+## 3.1. Visualisation du modèle 
 
-* A travers des cartes : Statiques ou interactives (leaflet) & Visualisation des prédictions pour une heure donnée mais aussi de l'erreur relative
+* Graphiques des résultats du benchmark
 
-----
+* Equation de régression du modèle et ses coefficients
 
-Création d'une couche contenant les prédictions, visualisée avec une palette de couleur
+* Cartes : Statiques ou interactives (leaflet) & Visualisation des prédictions pour une heure donnée mais aussi de l'erreur relative
 
-Création d'une couche contenant l'erreur associée à chaque prédiction avec un niveau de transparence variable (couche blanche avec opacité plus importante si l'erreur est élevée)
+* Création d'une couche contenant les prédictions, visualisée avec une palette de couleur
+
+* Création d'une couche contenant l'erreur associée à chaque prédiction avec un niveau de transparence variable (couche blanche avec opacité plus importante si l'erreur est élevée)
+
+## 3.2. Premiers résultats
+
+Modèle sur 2 mois
 
 ![](./data/template_map.png){width=60%}
 
 
-# 6. Suite du stage
+
+
+# 4. Perspectives et conclusions
 ##
 La démarche est définie et prête pour créer les modèles.
 
-_Prochain ojectif_ : Créer le modèle à partir de 5 ans de données et obtenir la meilleure combinaison de variables explicatives
+_Prochains objectifs_ :
+
+* Créer les modèles à partir de 5 ans de données
+
+* Identifier la meilleure combinaison de variables explicatives
+
+* Appliquer cette combinaison à la grille d'interpolation
+
+* Créer une _Shiny app_ pour la visualisation des données
+
+
 
