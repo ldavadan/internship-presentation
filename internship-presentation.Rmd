@@ -88,7 +88,7 @@ Part de chaque classe autour de chaque station virtuelle
 ----
 
 ![Récupération des données aux stations virtuelles avec buffers](./data/CLC_buffer.png)
-Récupération des données aux stations virtuelles avec buffers
+
 
 
 ----
@@ -101,7 +101,7 @@ Source : [SRTM](https://lta.cr.usgs.gov/SRTM)
 
 * Données d'altitude (résolution 90m) puis calcul de la pente, l'orientation et la rugosité du terrain avec R
 
-* Données très volumineuses = Temps de calcul important
+* Données très volumineuses = Temps de calcul important
 
 ----
 
@@ -194,9 +194,7 @@ Output avec pour combinaison de variables __ensoleillement + meilleure variable 
 
 ----
 
-```{r echo=FALSE}
-ggplotly(plotBMRSummary(bmr.w.l, pretty.names = F, pointsize = 1))
-```
+![Comparaison de trois combinaisons de variables](./data/comparison.png)
 
 Comparaison des modèles construits à partir de l'altitude et/ou de l'ensoleillement
 
