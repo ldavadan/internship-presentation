@@ -78,7 +78,7 @@ Sources : [Copernicus](https://land.copernicus.eu/pan-european/corine-land-cover
 
 ----
 
-```{r table, echo=FALSE, fig.width=6, fig.height=6, fig.cap = "Exemple de résultat"}
+```{r table, echo=FALSE, fig.cap="Exemple"}
 head(class.buff.clean.df)
 ```
 
@@ -153,7 +153,9 @@ _Objectif_ : Réaliser un benchmark appliquant la Régression Linéaire Multiple
 
 ### 2.3.2. Machine Learning in R
 
-`mlr` : package R proposant une interface simplifiée et commune pour toutes les méthodes statistiques à intégrer dans le machine learning.
+[mlr](
+
+) : package R proposant une interface simplifiée et commune pour toutes les méthodes statistiques à intégrer dans le machine learning.
 
 Paramètres à définir pour la modélisation :
 
