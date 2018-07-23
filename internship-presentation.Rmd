@@ -14,7 +14,7 @@ output:
     slide_level: 2
     theme: default
     transition: slide
-    fig_caption: false
+    fig_caption: yes
     reveal_options:
       previewLinks: false
   md_document:
@@ -39,6 +39,8 @@ output:
 
 ```{r include=FALSE}
 load("~/Documents/code/internship-presentation/data/env_data_presentation.RData")
+library(plotly)
+library(mlr)
 ```
 
 # 1. Objectifs
@@ -59,65 +61,69 @@ Préparation de l'environnement de travail
 
 ## 2.1 Récolte des données   
 
-_Objectif_ : intégrer des variables explicatives pouvant influencer des paramètres du milieu
-
-Nécessité d'avoir des données sur les variables d'intérêt pour pouvoir les prédire
-
 ### 2.1.1. Variables explicatives
 
 #### 2.1.1.1 Variables statiques
 
-Données d'occupation du sol : 
+Données d'occupation du sol (CORINE Land Cover)
+
+Sources : [Copernicus](https://land.copernicus.eu/pan-european/corine-land-cover/view) et [Géoportail belge](https://www.geo.be/#!/catalog/details/bcd19aa9-c320-4116-971b-6e4376137f13?l=en)
 
 * Stations en zones agricoles mais environnement à caractériser (route en asphalte à proximité ? forêt faisant de l'ombre ?)
 
-* CORINE Land Cover : données de [Copernicus](https://land.copernicus.eu/pan-european/corine-land-cover/view) accessibles sur le [géoportail belge](https://www.geo.be/#!/catalog/details/bcd19aa9-c320-4116-971b-6e4376137f13?l=en)
-
-----
 
 * 47 classes dont 26 présentes en Wallonie -> regroupement en 5 classes : Zones artificielles, Zones de cultures, Zones herbacées, Forêt et Plans d'eau
 
 * Récupération des données aux stations : zones tampons (100m autour des stations physiques et 500m pour les stations virtuelles) et calcul de la part de chaque classe dans l'environnement de la station
 
-```{r echo=FALSE}
+----
+
+```{r table, echo=FALSE, fig.width=6, fig.height=6, fig.cap = "Exemple de résultat"}
 head(class.buff.clean.df)
 ```
 
+
+Part de chaque classe autour de chaque station virtuelle
+
 ----
 
-![](./data/CLC_buffer.png){width=100%}
+![Récupération des données aux stations virtuelles avec buffers](./data/CLC_buffer.png)
+Récupération des données aux stations virtuelles avec buffers
+
 
 ----
 
 Modèle Numérique de Terrain
 
+Source : [SRTM](https://lta.cr.usgs.gov/SRTM)
+
 * Caractériser l'effet de la topographie du milieu sur la température
 
-* Données [SRTM](https://lta.cr.usgs.gov/SRTM) pour récupérer l'altitude (résolution 90m) puis calcul de la pente, l'orientation et la rugosité du terrain avec R
+* Données d'altitude (résolution 90m) puis calcul de la pente, l'orientation et la rugosité du terrain avec R
 
 * Données très volumineuses = Temps de calcul important
 
+----
+
 ### 2.1.1.2. Variables dynamiques
 
-API ensoleillement
+Source : API ensoleillement
 
 * Caractériser l'impact du rayonnement solaire (W/m²) sur la température
 
 * Rayonnement solaire : données [EUMETSAT](https://landsaf.ipma.pt/en/products/longwave-shortwave-radiation/dssf/) récupérées sur une API
 
-----
-
 * Données horaires, 875 points répartis sur la Wallonie -> insuffisant pour la précision souhaitée d'1 km² (~ 17000 points)
 
-* Spatialisation des données solaires à l'aide d'une méthode de krigeage
+* Spatialisation des données solaires à l'aide d'une méthode de krigeage (interpolation linéaire)
 
 * Récupération des données d'ensoleillement des stations PAMESEB en parallèle
 
 ## 2.1.2. Variables d'intérêt
 
-API AGROMET
+Source : API AGROMET
 
-* Besoin de données pour construire les modèles et les comparer à la réalité
+* Besoin de données pour construire les modèles et comparer les outputs à la réalité
 
 * 29 stations du réseau PAMESEB
 
@@ -166,7 +172,7 @@ Paramètres à définir pour la modélisation :
 
 * Graphiques des résultats du benchmark
 
-* Equation de régression du modèle et ses coefficients
+* Equation de régression des modèles et leurs coefficients
 
 * Cartes : Statiques ou interactives (leaflet) & Visualisation des prédictions pour une heure donnée mais aussi de l'erreur relative
 
@@ -176,12 +182,21 @@ Paramètres à définir pour la modélisation :
 
 ## 3.2. Premiers résultats
 
-Modèle sur 2 mois
+Output pour une heure après modélisation (benchmark réalisé sur 2 mois)
 
 ![](./data/template_map.png){width=60%}
 
+Output avec pour combinaison de variables __ensoleillement + meilleure variable explicative (corrélation linéaire)__, erreur en niveaux de transparence
 
+(inspiré par [Visual Representations of Data Uncertainty](https://www.e-education.psu.edu/geog486/node/1891) et [Transparency and Alpha levels for ggplot2](https://stackoverflow.com/questions/21193138/transparency-and-alpha-levels-for-ggplot2-stat-density2d-with-maps-and-layers-in))
 
+----
+
+```{r echo=FALSE}
+ggplotly(plotBMRSummary(bmr.w.l, pretty.names = F, pointsize = 1))
+```
+
+Comparaison des modèles construits à partir de l'altitude et/ou de l'ensoleillement
 
 # 4. Perspectives et conclusions
 ##
